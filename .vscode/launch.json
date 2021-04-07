@@ -13,7 +13,7 @@
       "runtimeExecutable": "deno",
       "runtimeArgs": [
         "run",
-        "--import-map=import_map.json",
+        "--import-map=importMap.json",
         "--unstable",
         "--inspect",
         "--allow-all",

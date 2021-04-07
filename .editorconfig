@@ -13,3 +13,7 @@ max_line_length = 100
 
 [*.md]
 trim_trailing_whitespace = false
+
+[{Makefile,**.mk}]
+# Use tabs for indentation (Makefiles require tabs)
+indent_style = tab
