@@ -1,6 +1,11 @@
 import { exists } from 'std/fs/mod.ts';
 
 const decoder = new TextDecoder("utf-8");
+
+export interface DirInfo {
+  subDirs: string[];
+}
+
 /**
  * 获取 index 文件的模板
  * @param filepathOrTplStr
