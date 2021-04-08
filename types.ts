@@ -1,9 +1,11 @@
 import { ServerRequest } from 'std/http/server.ts';
+import { Logger } from 'std/log/mod.ts';
 
 import { Env } from './env/base.ts';
 
 export interface RuntimeContext {
   env: Env;
+  logger: Logger;
 }
 
 export interface RequestContext {

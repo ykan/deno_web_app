@@ -1,20 +1,36 @@
+import { format } from 'std/datetime/mod.ts';
 import { HTTPOptions, listenAndServe } from 'std/http/server.ts';
+import { getLogger, handlers, setup } from 'std/log/mod.ts';
 
 import { createAPIMap } from './api/mod.ts';
 import { env } from './env/prod.ts';
 import { RuntimeContext } from './types.ts';
 
-const httpOpts: HTTPOptions = {
-  port: env.port,
-}
-
-
 async function main() {
+  await setup({
+    handlers: {
+      console: new handlers.ConsoleHandler('DEBUG', {
+        formatter: (logRecord) => `[${format(new Date(), 'yyyy-MM-dd HH:mm:ss.SSS')}][${logRecord.levelName}] - ${logRecord.msg}`
+      }),
+    },
+
+    loggers: {
+      default: {
+        level: 'DEBUG',
+        handlers: ['console'],
+      },
+    },
+  });
+  const logger = getLogger();
   const runtimeCtx: RuntimeContext = {
     env,
+    logger,
   };
   const map = await createAPIMap(runtimeCtx);
 
+  const httpOpts: HTTPOptions = {
+    port: env.port,
+  }
   await listenAndServe(httpOpts, async (req) => {
     const urlKeys = req.url.split('?');
     const pathKeys = urlKeys[0].split('/');
@@ -22,6 +38,7 @@ async function main() {
     const name = pathKeys[2];
     if (namespace === 'api') {
       if (map[name]) {
+        logger.info(`match api:${name}`);
         await map[name].handler(req);
       } else if (map['default']) {
         await map['default'].handler(req);
@@ -32,7 +49,6 @@ async function main() {
       });
     }
   });
-
 }
 
 await main();
