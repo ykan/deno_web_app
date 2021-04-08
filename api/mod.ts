@@ -1,8 +1,7 @@
 import { API, APIFactory, RuntimeContext } from '@/types.ts';
 import { multiRun } from '@/util/multiRun.ts';
 
-import { createAPI as default_createAPI } from './default/mod.ts';
-import { createAPI as sum_createAPI } from './sum/mod.ts';
+import { items } from './items.ts';
 
 export async function createAPIMap(runtimeCtx: RuntimeContext) {
   const map: Record<string, API> = {};
@@ -21,10 +20,10 @@ export async function createAPIMap(runtimeCtx: RuntimeContext) {
       map[name] = newApi;
     };
   }
-  const tasks = [
-    initSingleApi('default', default_createAPI),
-    initSingleApi('sum', sum_createAPI),
-  ];
+  const tasks = items.map((item) => {
+    const [name, createAPI] = item;
+    return initSingleApi(name, createAPI);
+  });
   await multiRun(tasks, 5);
   return map;
 }
