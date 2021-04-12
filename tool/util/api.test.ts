@@ -1,7 +1,7 @@
 import { assertEquals } from 'std/testing/asserts.ts';
 
-import { getIndexTpl } from './autoIndexFile.ts';
+import * as api from './api.ts';
 
-Deno.test('get index tpl', async () => {
-  assertEquals('ss', await getIndexTpl('ss'));
+Deno.test('[] shouldChange return false', async () => {
+  assertEquals(await api.shouldChange([]), false);
 });

@@ -1,7 +1,7 @@
-import { ServerRequest } from 'std/http/server.ts';
-import { Logger } from 'std/log/mod.ts';
+import type { ServerRequest } from 'std/http/server.ts';
+import type { Logger } from 'std/log/mod.ts';
 
-import { Env } from './env/base.ts';
+import type { Env } from './env/base.ts';
 
 export interface RuntimeContext {
   env: Env;

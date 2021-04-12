@@ -3,12 +3,8 @@ import * as path from 'std/path/mod.ts';
 
 const encoder = new TextEncoder();
 
-export interface DirInfo {
-  subDirs: string[];
-}
-
 /**
- * 获取 index 文件的模板
+ * 编译 api 目录整合成一个 ts 文件
  * @param filepathOrTplStr
  */
 export async function render() {
@@ -23,6 +19,7 @@ export async function render() {
       }
     }
   }
+
   console.log('items', items);
   const importContent = items.map(
     (item, index) => `import { createAPI as createAPI${index} } from './${item}/mod.ts';`
@@ -45,6 +42,10 @@ ${itemContent}
   await Deno.writeFile(targetPath, encoder.encode(code));
 }
 
+/**
+ * 判断是否要重新构建整个目录的文件
+ * @param paths 变动的文件路径
+ */
 export async function shouldChange(paths: string[]) {
   for (const subPath of paths) {
     if (!await exists(subPath)) {
