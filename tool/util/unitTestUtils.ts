@@ -12,9 +12,11 @@ export async function getTestFiles(paths: string[]) {
     if (/test\.ts$/.test(subPath)) {
       testFiles.push(subPath);
     }
-    const testPath = subPath.replace('.ts', '.test.ts');
-    if (await exists(testPath)) {
-      testFiles.push(testPath);
+    if (subPath.includes('.ts')) {
+      const testPath = subPath.replace('.ts', '.test.ts');
+      if (await exists(testPath)) {
+        testFiles.push(testPath);
+      }
     }
   }
   return testFiles;

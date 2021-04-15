@@ -2,13 +2,10 @@ import { exists } from 'std/fs/mod.ts';
 import * as path from 'std/path/mod.ts';
 
 const encoder = new TextEncoder();
+// make 一定是根目录执行的，暂时当根目录用
+const cwd = Deno.cwd();
 
-/**
- * 编译 api 目录整合成一个 ts 文件
- * @param filepathOrTplStr
- */
-export async function render() {
-  const cwd = Deno.cwd();
+export async function getItems() {
   const items: string[] = [];
   const apiDir = path.join(cwd, 'api');
   for await (const dirEntry of Deno.readDir(apiDir)) {
@@ -19,8 +16,20 @@ export async function render() {
       }
     }
   }
+  return items;
+}
 
-  console.log('items', items);
+let lastItems: string[] = [];
+export function setLastItems(items: string[]) {
+  lastItems = items;
+}
+/**
+ * 编译 api 目录整合成一个 ts 文件
+ */
+export async function render() {
+  const items = await getItems();
+  setLastItems(items);
+
   const importContent = items.map(
     (item, index) => `import { createAPI as createAPI${index} } from './${item}/mod.ts';`
   ).join('\n');
@@ -42,22 +51,24 @@ ${itemContent}
   await Deno.writeFile(targetPath, encoder.encode(code));
 }
 
+
 /**
  * 判断是否要重新构建整个目录的文件
- * @param paths 变动的文件路径
+ * @param e 变化的事件
  */
-export async function shouldChange(paths: string[]) {
-  for (const subPath of paths) {
-    if (!await exists(subPath)) {
-      return true;
-    }
-    const fileInfo = await Deno.lstat(subPath);
-    if (fileInfo.isDirectory) {
-      return true;
-    }
-    if (fileInfo.isFile && subPath.includes('mod.ts')) {
+export async function shouldChange() {
+  const items = await getItems();
+  if (items.length !== lastItems.length) {
+    return true;
+  }
+  for (let i = 0; i < items.length; i++) {
+    const lastItem = lastItems[i];
+    const newItem = items[i];
+    // 都是读文件夹，应该是同一个顺序的
+    if (lastItem !== newItem) {
       return true;
     }
   }
+
   return false;
 }

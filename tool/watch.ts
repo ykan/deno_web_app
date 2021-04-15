@@ -1,7 +1,7 @@
-import { debounce } from '@/util/debounce.ts';
-import { once } from '@/util/once.ts';
+import { AsyncFunction, debounce, once } from '@/util/mod.ts';
 
 import * as api from './util/api.ts';
+import { logFsEvent } from './util/logFsEvent.ts';
 import * as ut from './util/unitTestUtils.ts';
 
 const watcher = Deno.watchFs([
@@ -9,7 +9,7 @@ const watcher = Deno.watchFs([
   './util',
   './tool/util',
 ]);
-const debounceAndOnce = <T extends (...args: any[]) => Promise<void>>(fn: T, time: number) => {
+const debounceAndOnce = <T extends AsyncFunction<void>>(fn: T, time: number) => {
   const onceFn = once(fn);
   return debounce(onceFn, time);
 }
@@ -31,8 +31,8 @@ const runTests = debounceAndOnce(async () => {
 
 
 for await (const event of watcher) {
-  if (await api.shouldChange(event.paths)) {
-    console.log(event.paths, 'is changed');
+  logFsEvent(event);
+  if (await api.shouldChange()) {
     renderAPIItems();
   }
   // console.log(event.paths);

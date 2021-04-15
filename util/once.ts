@@ -1,8 +1,10 @@
+import { AsyncFunction } from './types.ts';
+
 /**
  * 限制异步函数不能同时执行
  * @param fn asnyc function
  */
-export function once<T extends (...args: any[]) => Promise<void>>(fn: T) {
+export function once<T extends AsyncFunction<void>>(fn: T) {
   let isCalling = false;
   const wrapFn = async (...args: any[]) => {
     if (isCalling) return;

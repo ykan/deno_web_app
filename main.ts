@@ -1,16 +1,16 @@
-import { format } from 'std/datetime/mod.ts';
 import { HTTPOptions, listenAndServe } from 'std/http/server.ts';
 import { getLogger, handlers, setup } from 'std/log/mod.ts';
 
 import { createAPIMap } from './api/mod.ts';
 import { env } from './env/prod.ts';
 import { RuntimeContext } from './types.ts';
+import { formatNow } from './util/mod.ts';
 
 async function main() {
   await setup({
     handlers: {
       console: new handlers.ConsoleHandler('DEBUG', {
-        formatter: (logRecord) => `[${format(new Date(), 'yyyy-MM-dd HH:mm:ss.SSS')}][${logRecord.levelName}] - ${logRecord.msg}`
+        formatter: (logRecord) => `[${formatNow()}][${logRecord.levelName}] - ${logRecord.msg}`
       }),
     },
 
