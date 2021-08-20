@@ -1,25 +1,26 @@
-import type { ServerRequest } from 'std/http/server.ts';
 import type { Logger } from 'std/log/mod.ts';
 
 import type { Env } from './env/base.ts';
+import type { GlobalResponse } from './global/response.ts';
 
 export interface RuntimeContext {
   env: Env;
   logger: Logger;
+  response: GlobalResponse;
 }
 
-export interface RequestContext {
-  query?: Record<string, string>;
+export interface RequestContext extends Deno.RequestEvent {
+  url: URL;
 }
 
-export interface APIResult {
+export interface APIResult<T = any> {
   type: 'success' | 'fail';
-  data?: any;
+  data?: T;
   message?: string;
 }
 
-export interface API {
-  handler: (req: ServerRequest) => Promise<APIResult>;
+export interface API<T = any> {
+  handler: (req: RequestContext) => Promise<APIResult<T>> | APIResult<T>;
 }
 
-export type APIFactory = (ctx: RuntimeContext) => Promise<API>;
+export type APIFactory<T = any> = (ctx: RuntimeContext) => Promise<API<T>> | API<T>;

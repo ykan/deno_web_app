@@ -7,6 +7,9 @@ cache:
 run:
 	deno run --unstable --allow-all --import-map=./importMap.json main.ts
 
+debug:
+	deno run  --inspect-brk --unstable --allow-all --import-map=./importMap.json main.ts
+
 gen:
 	deno run --unstable --allow-all --import-map=./importMap.json tool/gen.ts
 

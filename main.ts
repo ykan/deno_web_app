@@ -1,55 +1,69 @@
-import { HTTPOptions, listenAndServe } from 'std/http/server.ts';
-import { getLogger, handlers, setup } from 'std/log/mod.ts';
 
 import { createAPIMap } from './api/mod.ts';
 import { env } from './env/prod.ts';
+import { setupLogger } from './global/logger.ts';
+import { response } from './global/response.ts';
 import { RuntimeContext } from './types.ts';
-import { formatNow } from './util/mod.ts';
 
-async function main() {
-  await setup({
-    handlers: {
-      console: new handlers.ConsoleHandler('DEBUG', {
-        formatter: (logRecord) => `[${formatNow()}][${logRecord.levelName}] - ${logRecord.msg}`
-      }),
-    },
+const logger = await setupLogger();
+const runtimeCtx: RuntimeContext = {
+  env,
+  logger,
+  response,
+};
+const map = await createAPIMap(runtimeCtx);
 
-    loggers: {
-      default: {
-        level: 'DEBUG',
-        handlers: ['console'],
-      },
-    },
-  });
-  const logger = getLogger();
-  const runtimeCtx: RuntimeContext = {
-    env,
-    logger,
+
+async function handleRequest({ request, respondWith }: Deno.RequestEvent) {
+  const url = new URL(request.url);
+  const pathKeys = url.pathname.split('/');
+  const namespace = pathKeys[1];
+  const name = pathKeys[2];
+  const requestContext = {
+    request,
+    respondWith,
+    url
   };
-  const map = await createAPIMap(runtimeCtx);
-
-  const httpOpts: HTTPOptions = {
-    port: env.port,
-  }
-  await listenAndServe(httpOpts, async (req) => {
-    const urlKeys = req.url.split('?');
-    const pathKeys = urlKeys[0].split('/');
-    const namespace = pathKeys[1];
-    const name = pathKeys[2];
-    if (namespace === 'api') {
-      if (map[name]) {
-        logger.info(`match api:${name}`);
-        await map[name].handler(req);
-      } else if (map['default']) {
-        await map['default'].handler(req);
-      }
-    } else {
-      req.respond({
-        body: 'Nothing',
-      });
+  if (namespace === 'api') {
+    if (map[name]) {
+      logger.info(`match api:${name}`);
+      await map[name].handler(requestContext);
+    } else if (map['default']) {
+      await map['default'].handler(requestContext);
     }
-  });
+  } else {
+    respondWith(new Response(JSON.stringify({
+      body: 'Nothing',
+    })))
+  }
 }
 
-await main();
 
+async function handleConn(conn: Deno.Conn) {
+  const httpConn = Deno.serveHttp(conn);
+  while (true) {
+    try {
+      const requestEvent = await httpConn.nextRequest();
+      if (requestEvent) {
+        handleRequest(requestEvent);
+      }
+    } catch (err) {
+      logger.error(`Request error: ${err}`);
+      break;
+    }
+  }
+}
+
+const server = Deno.listen({
+  port: env.port,
+});
+while (true) {
+  try {
+    const conn = await server.accept();
+    handleConn(conn);
+  } catch (err) {
+    logger.error(`Connect error: ${err}`);
+    // The listener has closed
+    break;
+  }
+}

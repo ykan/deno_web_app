@@ -11,9 +11,9 @@ export async function createAPIMap(runtimeCtx: RuntimeContext) {
       const newApi: API = {
         handler: async (req) => {
           const result = await api.handler(req);
-          req.respond({
-            body: JSON.stringify(result),
-          });
+          req.respondWith(
+            new Response(JSON.stringify(result))
+          );
           return result;
         }
       };
